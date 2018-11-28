@@ -42,6 +42,7 @@ import io.strimzi.api.kafka.model.KafkaTopic;
 import io.strimzi.api.kafka.model.KafkaTopicBuilder;
 import io.strimzi.api.kafka.model.KafkaUser;
 import io.strimzi.api.kafka.model.KafkaUserBuilder;
+import io.strimzi.systemtest.utils.StUtils;
 import io.strimzi.test.TestUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -430,29 +431,15 @@ public class Resources {
     /**
      * Wait until the SS is ready and all of its Pods are also ready
      */
-    private void waitForStatefulSet(String namespace, String name) {
-        LOGGER.info("Waiting for StatefulSet {}", name);
-        TestUtils.waitFor("statefulset " + name, POLL_INTERVAL_FOR_RESOURCE_READINESS, TIMEOUT_FOR_RESOURCE_READINESS,
-            () -> client().apps().statefulSets().inNamespace(namespace).withName(name).isReady());
-        int replicas = client().apps().statefulSets().inNamespace(namespace).withName(name).get().getSpec().getReplicas();
-        for (int pod = 0; pod < replicas; pod++) {
-            String podName = name + "-" + pod;
-            LOGGER.info("Waiting for Pod {}", podName);
-            TestUtils.waitFor("pod " + name, POLL_INTERVAL_FOR_RESOURCE_READINESS, TIMEOUT_FOR_RESOURCE_READINESS,
-                () -> client().pods().inNamespace(namespace).withName(podName).isReady());
-            LOGGER.info("Pod {} is ready", podName);
-        }
-        LOGGER.info("StatefulSet {} is ready", name);
+    public void waitForStatefulSet(String namespace, String name) {
+        StUtils.waitForAllStatefulSetPodsReady(client(), namespace, name);
     }
 
     /**
      * Wait until the deployment is ready
      */
-    private void waitForDeployment(String namespace, String name) {
-        LOGGER.info("Waiting for Deployment {}", name);
-        TestUtils.waitFor("deployment " + name, POLL_INTERVAL_FOR_RESOURCE_READINESS, TIMEOUT_FOR_RESOURCE_READINESS,
-            () -> client().extensions().deployments().inNamespace(namespace).withName(name).isReady());
-        LOGGER.info("Deployment {} is ready", name);
+    public void waitForDeployment(String namespace, String name) {
+        StUtils.waitForDeploymentReady(client(), namespace, name);
     }
 
     private void waitForDeploymentConfig(String namespace, String name) {
