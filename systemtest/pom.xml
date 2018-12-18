@@ -9,6 +9,9 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <artifactId>systemtest</artifactId>
+    <properties>
+        <skip.tests>true</skip.tests>
+    </properties>
 
     <dependencies>
         <dependency>
@@ -120,6 +123,9 @@
             <plugin>
                 <artifactId>maven-failsafe-plugin</artifactId>
                 <version>${maven.failsafe.version}</version>
+                <configuration>
+                    <skipTests>${skip.tests}</skipTests>
+                </configuration>
                 <executions>
                     <execution>
                         <goals>
@@ -147,4 +153,13 @@
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <profile>
+            <id>systemtests</id>
+            <properties>
+                <skip.tests>false</skip.tests>
+            </properties>
+        </profile>
+    </profiles>
 </project>
