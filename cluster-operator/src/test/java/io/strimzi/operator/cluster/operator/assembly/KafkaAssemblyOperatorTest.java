@@ -99,6 +99,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
@@ -322,6 +323,7 @@ public class KafkaAssemblyOperatorTest {
         when(mockKsOps.maybeRollingUpdate(any(), any(Predicate.class))).thenReturn(Future.succeededFuture());
         when(mockKsOps.scaleUp(anyString(), anyString(), anyInt())).thenReturn(Future.succeededFuture(42));
         when(mockPolicyOps.reconcile(anyString(), anyString(), policyCaptor.capture())).thenReturn(Future.succeededFuture(ReconcileResult.created(null)));
+        when(mockZsOps.getAsync(anyString(), anyString())).thenReturn(Future.succeededFuture());
 
         Set<String> expectedSecrets = set(
                 KafkaCluster.clientsCaKeySecretName(clusterCmName),
@@ -737,6 +739,8 @@ public class KafkaAssemblyOperatorTest {
         when(mockZsOps.maybeRollingUpdate(any(), any(Predicate.class))).thenReturn(Future.succeededFuture());
         when(mockKsOps.maybeRollingUpdate(any(), any(Predicate.class))).thenReturn(Future.succeededFuture());
 
+        when(mockZsOps.getAsync(anyString(), anyString())).thenReturn(Future.succeededFuture());
+
         // Mock StatefulSet scaleUp
         ArgumentCaptor<String> scaledUpCaptor = ArgumentCaptor.forClass(String.class);
         when(mockZsOps.scaleUp(anyString(), scaledUpCaptor.capture(), anyInt())).thenReturn(
@@ -785,6 +789,7 @@ public class KafkaAssemblyOperatorTest {
             if (createResult.failed()) createResult.cause().printStackTrace();
             context.assertTrue(createResult.succeeded());
 
+            int steps = updatedAssembly.getSpec().getZookeeper().getReplicas();
             // rolling restart
             Set<String> expectedRollingRestarts = set();
             if (KafkaSetOperator.needsRollingUpdate(
@@ -799,6 +804,7 @@ public class KafkaAssemblyOperatorTest {
             }
 
             // No metrics config  => no CMs created
+            verify(mockZsOps, times(1)).scaleUp(anyString(), scaledUpCaptor.capture(), anyInt());
             verify(mockCmOps, never()).createOrUpdate(any());
             verifyNoMoreInteractions(mockPvcOps);
             async.complete();

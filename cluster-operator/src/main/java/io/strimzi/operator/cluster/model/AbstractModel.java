@@ -192,7 +192,7 @@ public abstract class AbstractModel {
         return replicas;
     }
 
-    protected void setReplicas(int replicas) {
+    public void setReplicas(int replicas) {
         this.replicas = replicas;
     }
 
